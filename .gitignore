@@ -1,0 +1,9 @@
+*/.dstore
+*/.DS_Store
+.DS_Store
+*/.idea
+*/.vscode
+*/__pycache__
+*/build
+*/dist
+*/*.egg-info
