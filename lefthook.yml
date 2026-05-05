@@ -1,0 +1,21 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: lock
+      glob:
+        - "src/backend/pyproject.toml"
+      run: cd src/backend && poetry lock
+    - name: lint
+      glob:
+        - "src/backend/*.py"
+      run: cd src/backend && poetry run ruff check {staged_files} --fix
+      stage_fixed: true
+    - name: format
+      glob:
+        - "src/backend/*.py"
+      run: cd src/backend && poetry run ruff format {staged_files}
+      stage_fixed: true
+    - name: type-check
+      glob:
+        - "src/backend/*.py"
+      run: cd src/backend && poetry run pyright {staged_files}
