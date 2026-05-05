@@ -10,7 +10,8 @@ requires-python = ">=3.13,<4.0.0"
 dependencies = [
     "pyopensoundcontrol (>=1.1.1,<2.0.0)",
     "fastapi (>=0.136.1,<0.137.0)",
-    "uvicorn (>=0.46.0,<0.47.0)"
+    "uvicorn (>=0.46.0,<0.47.0)",
+    "lefthook (>=2.1.6,<3.0.0)"
 ]
 
 [dependency-groups]
