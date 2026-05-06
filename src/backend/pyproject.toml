@@ -8,10 +8,11 @@ authors = [
 license = {file = "../../LICENSE"}
 requires-python = ">=3.13,<4.0.0"
 dependencies = [
-    "pyopensoundcontrol (>=1.1.1,<2.0.0)",
+    "pyopensoundcontrol (==2.0.0b10)",
     "fastapi (>=0.136.1,<0.137.0)",
     "uvicorn (>=0.46.0,<0.47.0)",
-    "lefthook (>=2.1.6,<3.0.0)"
+    "lefthook (>=2.1.6,<3.0.0)",
+    "pydantic (>=2.13.3,<3.0.0)"
 ]
 
 [dependency-groups]
