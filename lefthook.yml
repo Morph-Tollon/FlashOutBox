@@ -7,15 +7,15 @@ pre-commit:
       run: cd src/backend && poetry lock
     - name: lint
       glob:
-        - "./src/backend/*.py"
-      run: cd src/backend && poetry run ruff check {staged_files} --fix
+        - "src/backend/*.py"
+      run: cd src/backend && poetry run sh -c 'files=""; for file in "$@"; do files="$files ${file#src/backend/}"; done; ruff check $files --fix' sh {staged_files}
       stage_fixed: true
     - name: format
       glob:
-        - "./src/backend/*.py"
-      run: cd src/backend && poetry run ruff format {staged_files}
+        - "src/backend/*.py"
+      run: cd src/backend && poetry run sh -c 'files=""; for file in "$@"; do files="$files ${file#src/backend/}"; done; ruff format $files' sh {staged_files}
       stage_fixed: true
     - name: type-check
       glob:
-        - "./src/backend/*.py"
-      run: cd src/backend && poetry run pyright {staged_files}
+        - "src/backend/*.py"
+      run: cd src/backend && poetry run sh -c 'files=""; for file in "$@"; do files="$files ${file#src/backend/}"; done; pyright $files' sh {staged_files}
