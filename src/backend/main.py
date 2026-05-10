@@ -16,9 +16,8 @@ from validators import (
 )
 from validators import ActiveQueue, ActiveQueueItem
 import time
+
 logger = logging.getLogger("uvicorn.error")
-
-
 
 
 def initialize_eos_peer():
@@ -66,11 +65,9 @@ def register_handlers():
         validator=ActiveCompletionValidator,
     )
     # Sends reset command, forcing Eos to return the current acttive cue information.
-    app.state.eos_peer.send_message(
-        message=OSCMessage(
-            address='/eos/reset',
-            args=()))
-
+    # This is required because initialising the handlers takes more time under a fastapi lifespan that can be accounted for when initalising the listener.
+    # By the time eos has sent the connection messages, the handlers aren't yet ready to handle messages.
+    app.state.eos_peer.send_message(message=OSCMessage(address="/eos/reset", args=()))
 
 
 @asynccontextmanager
@@ -181,8 +178,10 @@ def go():
                     args=(),
                 )
             )
-        
-            time.sleep(0.1)  # Small delay to allow EOS to process the command and update the active cue
+
+            time.sleep(
+                0.1
+            )  # Small delay to allow EOS to process the command and update the active cue
             active = get_active_cue()
             return active
 
@@ -192,6 +191,7 @@ def go():
     else:
         raise HTTPException(status_code=400, detail="Current cue is not complete yet.")
 
+
 @app.get("/cue", description="Returns information about the currently active cue.")
 def get_active_cue():
     active_cue = app.state.eos_active.current
@@ -200,10 +200,10 @@ def get_active_cue():
     try:
         response = app.state.eos_peer.call(
             message=OSCMessage(
-                address=f'/eos/get/cue/{active_cue.list}/{active_cue.number}',
+                address=f"/eos/get/cue/{active_cue.list}/{active_cue.number}",
                 args=(),
             ),
-            return_address='/eos/out/get/cue/*/*/*/list/*/*',
+            return_address="/eos/out/get/cue/*/*/*/list/*/*",
             validator=ActiveCueValidator,
         )
         print(response.message.cue_note)
