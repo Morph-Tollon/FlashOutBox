@@ -7,6 +7,7 @@ class ActiveQueueItem:
     number: float
     list: float
     completion: float
+    complete: bool = False
 
 
 class ActiveQueue(Queue):
@@ -25,7 +26,10 @@ class ActiveQueue(Queue):
         last_item = self.queue[-1]
         self.put(
             ActiveQueueItem(
-                number=last_item.number, list=last_item.list, completion=completion
+                number=last_item.number,
+                list=last_item.list,
+                completion=completion,
+                complete=completion >= 100,
             )
         )
 
@@ -34,3 +38,10 @@ class ActiveQueue(Queue):
         if self.empty():
             return None
         return self.queue[-1]
+
+    @property
+    def complete(self) -> bool:
+        current = self.current
+        if current is None:
+            return False
+        return current.complete
