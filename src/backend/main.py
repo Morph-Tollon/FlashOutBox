@@ -1,6 +1,8 @@
+from asyncio import run
 from contextlib import asynccontextmanager
-
+import json
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import StreamingResponse
 from pyosc import Peer, OSCMessage, OSCString, OSCModes, OSCFraming
 from return_models import VersionModel, PingResponseModel
 import pathlib
@@ -16,6 +18,7 @@ from validators import (
 )
 from validators import ActiveQueue, ActiveQueueItem
 import time
+from fastapi.middleware.cors import CORSMiddleware
 
 logger = logging.getLogger("uvicorn.error")
 
@@ -25,7 +28,7 @@ def initialize_eos_peer():
     port = int(os.getenv("DESK_PORT", "3032"))
     if not ip:
         raise ValueError("DESK_IP environment variable is not set")
-    try:
+    try:    
         peer = Peer(address=ip, port=port, mode=OSCModes.TCP, framing=OSCFraming.OSC11)
         peer.start_listening()
 
@@ -40,17 +43,16 @@ def get_version():
         pyproject = tomllib.load(f)
     return pyproject["project"]["version"]
 
-
 def active_handler(message) -> None:
     print(message)
     if isinstance(message, ActiveCueNumberValidator):
-        app.state.eos_active.put(
+        run(app.state.eos_active.put(
             ActiveQueueItem(
                 number=message.number, list=message.list, completion=message.completion
             )
-        )
+        ))
     else:
-        app.state.eos_active.completion(message.completion)
+        run(app.state.eos_active.completion(message.completion))
 
 
 def register_handlers():
@@ -122,7 +124,21 @@ app = FastAPI(
     debug=True,
     lifespan=lifespan,
 )
+origins = [
+    "http://localhost.tiangolo.com",
+    "https://localhost.tiangolo.com",
+    "http://localhost",
+    "http://localhost:8080",
+    "*"
+]
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 @app.get("/version", response_model=VersionModel)
 def version():
@@ -219,3 +235,19 @@ def get_active_cue():
         raise HTTPException(
             status_code=500, detail="Error sending get active cue command"
         )
+
+async def update_generator():
+    while True:
+        try:
+            cue = await app.state.eos_active.get()
+            print(cue)
+            print(cue.json())
+            yield f"data: {json.dumps(cue.json())}\n\n"
+        except Exception as e:
+            logger.error(f"Error in update generator: {e}")
+            break
+    
+
+@app.get('/updates', description='A simple event stream that clients can connect to to get updates when the active cue changes.')
+async def event_stream():
+    return StreamingResponse(update_generator())
