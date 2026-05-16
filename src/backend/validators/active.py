@@ -20,6 +20,12 @@ class ActiveCueValidator(BaseModel):
             return self.args[27].value
         raise ValueError("Cue note argument is not a string or is missing.")
 
+    @property
+    def label(self) -> str:
+        if isinstance(self.args[2], OSCString):
+            return self.args[2].value
+        raise ValueError("Label argument is not a string or is missing.")
+
 
 class ActiveCueNumberValidator(BaseModel):
     address: str
