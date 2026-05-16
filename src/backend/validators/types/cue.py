@@ -1,13 +1,21 @@
-from queue import Queue
-import dataclasses
+from asyncio import Queue
+from dataclasses import dataclass
 
 
-@dataclasses.dataclass
+@dataclass
 class ActiveQueueItem:
     number: float
     list: float
     completion: float
     complete: bool = False
+
+    def json(self):
+        return {
+            "number": self.number,
+            "list": self.list,
+            "completion": self.completion,
+            "complete": self.complete,
+        }
 
 
 class ActiveQueue(Queue):
@@ -17,14 +25,14 @@ class ActiveQueue(Queue):
     def update_last_complete(self, completion: float) -> None:
         if self.empty():
             return
-        last_item = self.queue[-1]
+        last_item = self.get_nowait()
         last_item.completion = completion
 
-    def completion(self, completion: float) -> None | Exception:
+    async def completion(self, completion: float) -> None | Exception:
         if self.empty():
             raise RuntimeError("No active cues in the queue.")
-        last_item = self.queue[-1]
-        self.put(
+        last_item = self.get_nowait()
+        await self.put(
             ActiveQueueItem(
                 number=last_item.number,
                 list=last_item.list,
@@ -37,7 +45,7 @@ class ActiveQueue(Queue):
     def current(self) -> ActiveQueueItem | None:
         if self.empty():
             return None
-        return self.queue[-1]
+        return self.get_nowait()
 
     @property
     def complete(self) -> bool:
